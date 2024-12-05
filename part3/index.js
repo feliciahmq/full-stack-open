@@ -98,6 +98,28 @@ app.post('/api/persons', (request, response) => {
   response.json(person)
 })
 
+app.put('/api/persons/:id', (request, response) => {
+  const id = request.params.id
+  const body = request.body
+  if (!body.name || !body.number) {
+    return response.status(400).json({
+      error: 'name or number is missing'
+    }) 
+  }
+
+  const index = persons.findIndex(p => p.id == id)
+  if (index == -1) {
+    return response.status(404).json({
+      error: 'person not found'
+    })
+  }
+
+  const updatedPerson = { ...persons[index], ...body }
+  persons[index] = updatedPerson
+
+  response.json(updatedPerson)
+})
+
 const PORT = process.env.PORT || 3001
 app.listen(PORT)
 console.log(`Server running on port ${PORT}`);

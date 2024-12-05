@@ -105,12 +105,11 @@ const App = () => {
 
     if (nameFound) {
       if (window.confirm(`${newPerson.name} is already added to phonebook, replace the old number with a new one?`)) {
-        const updatedPersons = { ...nameFound, number: newNumber};
         personService
-          .update(nameFound.id, updatedPersons)  
-          .then(() => {
+          .update(nameFound.id, newPerson)  
+          .then((updatedPerson) => {
             setPersons(
-              persons.map(e => e.id != nameFound.id ? e : updatedPersons)
+              persons.map(e => e.id != nameFound.id ? e : updatedPerson)
             );
             setNewName('');
             setNewNumber('');
