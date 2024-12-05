@@ -62,11 +62,18 @@ const App = () => {
   const [errorMessaage, setErrorMessage] = useState(null);
 
   useEffect(() => {
-    console.log('effect');
     personService
       .getAll()
       .then(initialPersons => {
-        setPersons(initialPersons)
+        console.log('API Response: ', initialPersons)
+        if (Array.isArray(initialPersons)) {
+          setPersons(initialPersons)
+        } else {
+          console.error('Wrong response format')
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching: ', error)
       })
   }, []);
 
@@ -174,9 +181,7 @@ const App = () => {
     }
   }
 
-  const filterPerson = persons.filter(
-    e => e.name.toLowerCase().startsWith(filterName.toLowerCase())
-  );
+  const filterPerson = persons.filter(e => e.name.toLowerCase().startsWith(filterName.toLowerCase()));
 
   return (
     <div>
