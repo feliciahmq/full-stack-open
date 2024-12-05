@@ -1,9 +1,29 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react';
+import personService from './services/persons';
+import './index.css';
 
 const Filter = ({ search, handleChange }) => {
   return (
     <div>
       filter shown with <input value={search} onChange={handleChange} />
+    </div>
+  )
+}
+
+const Button = ({ text, handleClick }) => (
+  <button onClick={handleClick}>
+    {text}
+  </button>
+)
+
+const Notification = ({ message }) => {
+  if (message == null) {
+    return null;
+  }
+
+  return (
+    <div className='error'>
+      {message}
     </div>
   )
 }
@@ -24,26 +44,31 @@ const PersonForm = ({ onSubmit, name, handleName, num, handleNum }) => {
   )
 }
 
-const Persons = ({ persons }) => {
+const Persons = ({ persons, deletePerson }) => {
   return (
     <div>
       {persons.map((person, index) => (
-        <p key={index}>{person.name} {person.number}</p>
+        <p key={index}>{person.name} {person.number} <Button text='delete' handleClick={() => deletePerson(person.id)}/></p>
       ))}
     </div>
   )
 }
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456', id: 1 },
-    { name: 'Ada Lovelace', number: '39-44-5323523', id: 2 },
-    { name: 'Dan Abramov', number: '12-43-234345', id: 3 },
-    { name: 'Mary Poppendieck', number: '39-23-6423122', id: 4 }
-  ]);
+  const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
   const [filterName, setFilterName] = useState('');
+  const [errorMessaage, setErrorMessage] = useState(null);
+
+  useEffect(() => {
+    console.log('effect');
+    personService
+      .getAll()
+      .then(initialPersons => {
+        setPersons(initialPersons)
+      })
+  }, []);
 
   const handleNewName = (event) => {
     setNewName(event.target.value);
@@ -64,20 +89,88 @@ const App = () => {
       number: newNumber,
     };
 
-    const nameCheck = persons.find(
+    const nameFound = persons.find(
       e => e.name.toLowerCase() == newPerson.name.toLowerCase()
     );
-    const numCheck = persons.find(
+    const numFound = persons.find(
       e => e.number.toLowerCase() == newPerson.number.toLowerCase()
     );
-    if (nameCheck) {
-      window.alert(`${newName} is already added to phonebook`);
-    } else if (numCheck) {
+
+    if (nameFound) {
+      if (window.confirm(`${newPerson.name} is already added to phonebook, replace the old number with a new one?`)) {
+        const updatedPersons = { ...nameFound, number: newNumber};
+        personService
+          .update(nameFound.id, updatedPersons)  
+          .then(() => {
+            setPersons(
+              persons.map(e => e.id != nameFound.id ? e : updatedPersons)
+            );
+            setNewName('');
+            setNewNumber('');
+            setErrorMessage(
+              `Replaced ${newPerson.name}'s number` 
+            )
+            setTimeout(() => {
+              setErrorMessage(null)
+            }, 5000)
+          })
+          .catch((error) => {
+            if (error.response && error.response.status == 404) {
+              setErrorMessage(
+                `Information of ${newPerson.name} has already been removed from server` 
+              )
+              setTimeout(() => {
+                setErrorMessage(null)
+              }, 5000)
+            }
+          })
+      }
+    } else if (numFound) {
       window.alert(`${newNumber} is already added to phonebook`);
     } else {
-      setPersons(persons.concat(newPerson));
-      setNewName('');
-      setNewNumber('');
+      personService
+        .create(newPerson)
+        .then(newPerson => {
+          setPersons(persons.concat(newPerson))
+          setNewName('');
+          setNewNumber('');
+          setErrorMessage(
+            `Added ${newPerson.name}` 
+          )
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 5000)
+        })
+        .catch((error) => {
+          if (error.response && error.response.status == 404) {
+            setErrorMessage(
+              `Information of ${newPerson.name} has already been removed from server` 
+            )
+            setTimeout(() => {
+              setErrorMessage(null)
+            }, 5000)
+          }
+        })
+    }
+  }
+
+  const deletePerson = (id) => {
+    const personToDelete = persons.find(e => e.id == id);
+    if (window.confirm(`Delete ${personToDelete.name}?`)) {
+      personService
+        .delete(id)
+        .then(() => {
+          setPersons(persons.filter(e => e.id != id))
+          setErrorMessage(
+            `Information of ${personToDelete.name} has been removed from server` 
+          )
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 5000)
+        })
+        .catch((error) => {
+          console.log(error);
+        });
     }
   }
 
@@ -88,6 +181,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={errorMessaage} />
     
       <Filter search={filterName} handleChange={handleFilter}/>
 
@@ -102,8 +196,8 @@ const App = () => {
       />
 
       <h3>Numbers</h3>
-      
-      <Persons persons={filterPerson}/>
+
+      <Persons persons={filterPerson} deletePerson={deletePerson}/>
     </div>
   )
 }
