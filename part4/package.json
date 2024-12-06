@@ -6,7 +6,12 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build:ui": "rm -rf build && cd ../frontend/ && npm run build && cp -r build ../backend",
+    "deploy": "fly deploy",
+    "deploy:full": "npm run build:ui && npm run deploy",
+    "logs:prod": "fly logs",
+    "lint": "eslint .",
+    "test": "node --test"
   },
   "author": "Felicia Hwang",
   "license": "MIT",
@@ -15,6 +20,7 @@
     "dotenv": "^16.4.7",
     "eslint": "^9.16.0",
     "express": "^4.21.2",
+    "lodash": "^4.17.21",
     "mongodb": "^6.11.0",
     "mongoose": "^8.8.4",
     "node": "^22.12.0",
