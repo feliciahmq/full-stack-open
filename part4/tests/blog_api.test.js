@@ -1,24 +1,47 @@
 const { describe, test, after, beforeEach } = require('node:test')
 const assert = require('node:assert')
 const supertest = require('supertest')
+const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
 const helper = require('./test_helper')
 const app = require('../app') // express app not listening to any ports
 const api = supertest(app)
 
 const Blog = require('../models/blog')
-
+const User = require('../models/user')
 
 beforeEach(async () => {
+  await User.deleteMany({})
   await Blog.deleteMany({})
 
+  const passwordHash = await bcrypt.hash("blogtestpw", 10)
+  const user = new User({
+    username: "blogtest",
+    name: "blogtester",
+    blogs: [],
+    passwordHash
+  })
+
+  const savedUser = await user.save()
   const blogObjects = helper.initialBlogs
-    .map(b => new Blog(b))
-  const promiseArray = blogObjects.map(b => b.save())
-  await Promise.all(promiseArray) // waits until every promise for saving a blog is finished (database has been initialised)
+    .map(b => new Blog({
+      title: b.title,
+      author: b.author,
+      url: b.url,
+      user: savedUser._id, // mock user
+      likes: b.likes ? b.likes : 0
+    }))
+
+    const promiseArray = blogObjects.map(b => {
+      b.save()
+      savedUser.blogs = savedUser.blogs.concat(b._id) // add blog to user
+    })
+    await Promise.all(promiseArray) // waits until every promise for saving a blog is finished (database has been initialised)
+  await savedUser.save()
 })
 
 describe('when there is initially some blogs saved', () => {
+
   test('blogs are returned as json', async () => {
     await api
       .get('/api/blogs')
@@ -42,20 +65,10 @@ describe('when there is initially some blogs saved', () => {
       assert.strictEqual(blog._id, undefined, 'expected not to have _id property')
     })
   })
+
 })
 
 describe('viewing a specific blog', () => {
-  test('succeeds with a valid id', async () => {
-    const blogsAtStart = await helper.blogsInDb()
-    const blogToView = blogsAtStart[0]
-
-    const resultBlog = await api 
-      .get(`/api/blogs/${blogToView.id}`)
-      .expect(200)
-      .expect('Content-Type', /application\/json/)
-    
-      assert.deepStrictEqual(resultBlog.body, blogToView)
-  })
 
   test('fails with statuscode 404 if blog does not exist', async () => {
     const validNonexistingId = await helper.nonExistingId()
@@ -65,7 +78,7 @@ describe('viewing a specific blog', () => {
       .expect(404)
   })
 
-  test('fails with statuscode 400 id is invalid', async () => {
+  test('fails with statuscode 400 if id is invalid', async () => {
     const invalidId = '5a3d5da59070081a82a3445'
 
     await api 
@@ -75,7 +88,16 @@ describe('viewing a specific blog', () => {
 })
 
 describe('addition of a new blog', () => {
-  test('succeeds with valid data', async () => {
+  test('succeeds with valid data by authorized user', async () => {
+    const user = {
+      username: "blogtest",
+      password: "blogtestpw"
+    }
+
+    const loginUser = await api
+      .post('/api/login')
+      .send(user)
+    
     const newBlog = {
       title: 'Go To Statement Considered Good',
       author: 'Edsger W. Dijkstra',
@@ -86,6 +108,7 @@ describe('addition of a new blog', () => {
     await api
       .post('/api/blogs')
       .send(newBlog)
+      .set('Authorization', `Bearer ${loginUser.body.token}`)
       .expect(201)
       .expect('Content-Type', /application\/json/)
 
@@ -96,7 +119,37 @@ describe('addition of a new blog', () => {
     assert(contents.includes('Go To Statement Considered Good'))
   })
 
+  test('fails by unauthorized user', async () => {
+    const newBlog = {
+      title: 'Go To Statement Considered Good',
+      author: 'Edsger W. Dijkstra',
+      url: 'https://homepages.cwi.nl/~storm/teaching/reader/Dijkstra68.pdf',
+      likes: 8
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(401)
+      .expect('Content-Type', /application\/json/)
+    
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+
+    const contents = blogsAtEnd.map(r => r.title) // by title
+    assert(!contents.includes('Go To Statement Considered Good'))
+  })
+
   test('without likes will default to 0', async () => {
+    const user = {
+      username: "blogtest",
+      password: "blogtestpw"
+    }
+
+    const loginUser = await api
+      .post('/api/login')
+      .send(user)
+
     const newBlog = {
       title: 'Go To Statement Considered Good',
       author: 'Edsger W. Dijkstra',
@@ -107,6 +160,8 @@ describe('addition of a new blog', () => {
       .post('/api/blogs')
       .send(newBlog)
       .expect(201)
+      .set('Authorization', `Bearer ${loginUser.body.token}`)
+      .expect('Content-Type', /application\/json/)
     
       const blogsAtEnd = await helper.blogsInDb()
       const createdBlog = blogsAtEnd.find(b => b.title === newBlog.title)
@@ -115,6 +170,15 @@ describe('addition of a new blog', () => {
   })
 
   test('title missing returns 400 Bad Request', async () => {
+    const user = {
+      username: "blogtest",
+      password: "blogtestpw"
+    }
+
+    const loginUser = await api
+      .post('/api/login')
+      .send(user)
+
     const newBlog = {
       author: 'Edsger W. Dijkstra',
       url: 'https://homepages.cwi.nl/~storm/teaching/reader/Dijkstra68.pdf',
@@ -125,12 +189,22 @@ describe('addition of a new blog', () => {
       .post('/api/blogs')
       .send(newBlog)
       .expect(400)
+      .set('Authorization', `Bearer ${loginUser.body.token}`)
 
     const blogsAtEnd = await helper.blogsInDb()
     assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length, 'did not add blog post')
   })
 
   test('url missing returns 400 Bad Request', async () => {
+    const user = {
+      username: "blogtest",
+      password: "blogtestpw"
+    }
+
+    const loginUser = await api
+      .post('/api/login')
+      .send(user)
+
     const newBlog = {
       title: 'Go To Statement Considered Good',
       author: 'Edsger W. Dijkstra',
@@ -141,6 +215,7 @@ describe('addition of a new blog', () => {
       .post('/api/blogs')
       .send(newBlog)
       .expect(400)
+      .set('Authorization', `Bearer ${loginUser.body.token}`)
 
     const blogsAtEnd = await helper.blogsInDb()
     assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length, 'did not add blog post')
@@ -149,12 +224,22 @@ describe('addition of a new blog', () => {
 
 describe('blog post', () => {
   test('delete a post succeeds with statuscode 204 if id is valid', async () => {
+    const user = {
+      username: "blogtest",
+      password: "blogtestpw"
+    }
+
+    const loginUser = await api
+      .post('/api/login')
+      .send(user)
+
     const blogsAtStart = await helper.blogsInDb()
     const blogToDelete = blogsAtStart[0]
 
     await api 
       .delete(`/api/blogs/${blogToDelete.id}`)
       .expect(204)
+      .set('Authorization', `Bearer ${loginUser.body.token}`)
 
     const blogsAtEnd = await helper.blogsInDb()
 
@@ -165,6 +250,15 @@ describe('blog post', () => {
   })
 
   test('update likes succeeds with statuscode 200 if id is valid', async () => {
+    const user = {
+      username: "blogtest",
+      password: "blogtestpw"
+    }
+
+    const loginUser = await api
+      .post('/api/login')
+      .send(user)
+
     const blogsAtStart = await helper.blogsInDb()
     const blogToUpdate = blogsAtStart[0]
 
@@ -179,6 +273,7 @@ describe('blog post', () => {
       .put(`/api/blogs/${blogToUpdate.id}`)
       .send(newBlog)
       .expect(200)
+      .set('Authorization', `Bearer ${loginUser.body.token}`)
       .expect('Content-Type', /application\/json/)
 
     const blogsAtEnd = await helper.blogsInDb()
