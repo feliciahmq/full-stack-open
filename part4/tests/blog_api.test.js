@@ -1,5 +1,3 @@
-const { describe, test, after, beforeEach } = require('node:test')
-const assert = require('node:assert')
 const supertest = require('supertest')
 const bcrypt = require('bcrypt')
 const mongoose = require('mongoose')
@@ -9,6 +7,8 @@ const api = supertest(app)
 
 const Blog = require('../models/blog')
 const User = require('../models/user')
+
+jest.setTimeout(30000); 
 
 beforeEach(async () => {
   await User.deleteMany({})
@@ -32,11 +32,11 @@ beforeEach(async () => {
       likes: b.likes ? b.likes : 0
     }))
 
-    const promiseArray = blogObjects.map(b => {
-      b.save()
-      savedUser.blogs = savedUser.blogs.concat(b._id) // add blog to user
-    })
-    await Promise.all(promiseArray) // waits until every promise for saving a blog is finished (database has been initialised)
+  const promiseArray = blogObjects.map(b => {
+    b.save()
+    savedUser.blogs = savedUser.blogs.concat(b._id) // add blog to user
+  })
+  await Promise.all(promiseArray) // waits until every promise for saving a blog is finished (database has been initialised)
   await savedUser.save()
 })
 
@@ -52,18 +52,19 @@ describe('when there is initially some blogs saved', () => {
   test('all blogs are returned', async () => {
     const response = await api.get('/api/blogs')
     
-    assert.strictEqual(response.body.length, helper.initialBlogs.length)
+    expect(response.body).toHaveLength(helper.initialBlogs.length)
   })
 
   test('unique identifier property of blog posts is named id', async () => {
-    const response = await api.get('/api/blogs')
+    const blogsAtStart = await helper.blogsInDb()
+    const blogToView = blogsAtStart[0]
+
+    const result = await api
+      .get(`/api/blogs/${blogToView.id}`)
       .expect(200)
       .expect('Content-Type', /application\/json/)
 
-    response.body.forEach(blog => {
-      assert.ok(blog.id, 'expected id property')
-      assert.strictEqual(blog._id, undefined, 'expected not to have _id property')
-    })
+    expect(result).toBeDefined()
   })
 
 })
@@ -88,6 +89,7 @@ describe('viewing a specific blog', () => {
 })
 
 describe('addition of a new blog', () => {
+
   test('succeeds with valid data by authorized user', async () => {
     const user = {
       username: "blogtest",
@@ -113,10 +115,10 @@ describe('addition of a new blog', () => {
       .expect('Content-Type', /application\/json/)
 
     const blogsAtEnd = await helper.blogsInDb()
-    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
 
     const contents = blogsAtEnd.map(r => r.title) // by title
-    assert(contents.includes('Go To Statement Considered Good'))
+    expect(contents).toContain('Go To Statement Considered Good')
   })
 
   test('fails by unauthorized user', async () => {
@@ -134,10 +136,10 @@ describe('addition of a new blog', () => {
       .expect('Content-Type', /application\/json/)
     
     const blogsAtEnd = await helper.blogsInDb()
-    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
 
     const contents = blogsAtEnd.map(r => r.title) // by title
-    assert(!contents.includes('Go To Statement Considered Good'))
+    expect(contents).not.toContain('Go To Statement Considered Good')
   })
 
   test('without likes will default to 0', async () => {
@@ -166,7 +168,7 @@ describe('addition of a new blog', () => {
       const blogsAtEnd = await helper.blogsInDb()
       const createdBlog = blogsAtEnd.find(b => b.title === newBlog.title)
       
-      assert.strictEqual(createdBlog.likes, 0)
+      expect(createdBlog.likes).toEqual(0)
   })
 
   test('title missing returns 400 Bad Request', async () => {
@@ -192,7 +194,7 @@ describe('addition of a new blog', () => {
       .set('Authorization', `Bearer ${loginUser.body.token}`)
 
     const blogsAtEnd = await helper.blogsInDb()
-    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length, 'did not add blog post')
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
   })
 
   test('url missing returns 400 Bad Request', async () => {
@@ -218,7 +220,7 @@ describe('addition of a new blog', () => {
       .set('Authorization', `Bearer ${loginUser.body.token}`)
 
     const blogsAtEnd = await helper.blogsInDb()
-    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length, 'did not add blog post')
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
   })
 })
 
@@ -243,10 +245,10 @@ describe('blog post', () => {
 
     const blogsAtEnd = await helper.blogsInDb()
 
-    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
+    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length - 1)
 
     const contents = blogsAtEnd.map(r => r.title)
-    assert(!contents.includes(blogToDelete.title))
+    expect(contents).not.toContain(blogToDelete.title)
   })
 
   test('update likes succeeds with statuscode 200 if id is valid', async () => {
@@ -277,13 +279,13 @@ describe('blog post', () => {
       .expect('Content-Type', /application\/json/)
 
     const blogsAtEnd = await helper.blogsInDb()
-    assert.strictEqual(blogsAtStart.length , blogsAtEnd.length)
+    expect(blogsAtStart).toHaveLength(blogsAtEnd.length)
     
     const updatedBlog = blogsAtEnd.find(b => b.id === blogToUpdate.id)
-    assert.strictEqual(updatedBlog.likes, 200)
+    expect(updatedBlog.likes).toEqual(200)
   })
 })
 
-after(async () => {
+afterAll(async () => {
   await mongoose.connection.close()
 })

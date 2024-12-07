@@ -1,5 +1,3 @@
-const { describe, test, after, beforeEach } = require('node:test')
-const assert = require('node:assert')
 const supertest = require('supertest')
 const mongoose = require('mongoose')
 const helper = require('./test_helper')
@@ -8,6 +6,8 @@ const api = supertest(app)
 
 const bcrypt = require('bcrypt')
 const User = require('../models/user')
+
+jest.setTimeout(30000); 
 
 beforeEach(async () => {
   await User.deleteMany({})
@@ -41,10 +41,10 @@ describe('when there is initially one user in db', () => {
       .expect('Content-Type', /application\/json/)
 
     const usersAtEnd = await helper.usersInDb()
-    assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1)
+    expect(usersAtEnd).toHaveLength(usersAtStart.length + 1)
 
     const usernames = usersAtEnd.map(u => u.username)
-    assert(usernames.includes(newUser.username))
+    expect(usernames).toContain(newUser.username)
   })
 
   test('creation fails with proper statuscode and message if username already taken', async () => {
@@ -63,9 +63,9 @@ describe('when there is initially one user in db', () => {
       .expect('Content-Type', /application\/json/)
 
     const usersAtEnd = await helper.usersInDb()
-    assert(result.body.error.includes('expected `username` to be unique'))
+    expect(result.body.error).toContain('expected `username` to be unique')
 
-    assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
   })
 
   test('creation fails with proper statuscode and message if username is less than 3 characters', async () => {
@@ -84,9 +84,9 @@ describe('when there is initially one user in db', () => {
       .expect('Content-Type', /application\/json/)
 
     const usersAtEnd = await helper.usersInDb()
-    assert(result.body.error.includes('password and username must be at least 3 characters long'))
+    expect(result.body.error).toContain('password and username must be at least 3 characters long')
 
-    assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
   })
 
   test('creation fails with proper statuscode and message if password is less than 3 characters', async () => {
@@ -105,12 +105,12 @@ describe('when there is initially one user in db', () => {
       .expect('Content-Type', /application\/json/)
 
     const usersAtEnd = await helper.usersInDb()
-    assert(result.body.error.includes('password and username must be at least 3 characters long'))
+    expect(result.body.error).toContain('password and username must be at least 3 characters long')
 
-    assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    expect(usersAtEnd).toHaveLength(usersAtStart.length)
   })
 })
 
-after(async () => {
+afterAll(async () => {
   await mongoose.connection.close()
 })
