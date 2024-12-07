@@ -1,5 +1,6 @@
 const config = require('./utils/config')
 const express = require('express')
+require('express-async-errors') // exception in async route, execution automatically passed to error-handling middleware
 const app = express()
 const cors = require('cors')
 const blogsRouter = require('./controllers/blogs')

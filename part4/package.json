@@ -4,14 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "cross-env NODE_ENV=production node index.js",
+    "dev": "cross-env NODE_ENV=development nodemon index.js",
+    "test": "cross-env NODE_ENV=test node --test",
     "build:ui": "rm -rf build && cd ../frontend/ && npm run build && cp -r build ../backend",
     "deploy": "fly deploy",
     "deploy:full": "npm run build:ui && npm run deploy",
     "logs:prod": "fly logs",
-    "lint": "eslint .",
-    "test": "node --test"
+    "lint": "eslint ."
   },
   "author": "Felicia Hwang",
   "license": "MIT",
@@ -20,10 +20,15 @@
     "dotenv": "^16.4.7",
     "eslint": "^9.16.0",
     "express": "^4.21.2",
+    "express-async-errors": "^3.1.1",
     "lodash": "^4.17.21",
     "mongodb": "^6.11.0",
     "mongoose": "^8.8.4",
     "node": "^22.12.0",
     "nodemon": "^3.1.7"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "supertest": "^7.0.0"
   }
 }
