@@ -8,12 +8,14 @@ import AddBlogForm from './components/AddBlogForm'
 import blogService from './services/blogs'
 import loginService from './services/login'
 import Togglable from './components/Togglable'
+import LoginForm from './components/LoginForm'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
+  const [user, setUser] = useState(null)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [user, setUser] = useState(null)
+
   const [error, setError] = useState(null)
   const [message, setMessage] = useState(null)
   const [refresh, setRefresh] = useState(false)
@@ -75,30 +77,6 @@ const App = () => {
     setPassword('')
   }
 
-  const loginForm = () => (
-    <form onSubmit={handleLogin}>
-      <div>
-        username
-          <input
-          type="text"
-          value={username}
-          name="Username"
-          onChange={({ target }) => setUsername(target.value)}
-        />
-      </div>
-      <div>
-        password
-          <input
-          type="password"
-          value={password}
-          name="Password"
-          onChange={({ target }) => setPassword(target.value)}
-        />
-      </div>
-      <button type="submit">login</button>
-    </form>      
-  )
-
   const addBlog = (blogObject) => {
     addBlogFormRef.current.toggleVisibility()
     blogService.create(blogObject)
@@ -127,7 +105,13 @@ const App = () => {
           <h2>log in to application</h2>
           <Notification message={message} error={error} />
           
-          {loginForm()}
+          <LoginForm 
+            username={username}
+            password={password}
+            onUsernameChange={({ target }) => setUsername(target.value)}
+            onPasswordChange={({ target }) => setPassword(target.value)}
+            handleLogin={handleLogin} 
+          />
       </div>
     )
   } else {
@@ -143,7 +127,7 @@ const App = () => {
           </Togglable>
 
           {blogs.map(blog =>
-            <Blog key={blog.id} blog={blog} addLike={addLike} deleteBlog={deleteBlog}/>
+            <Blog key={blog.id} blog={blog} user={user} addLike={addLike} deleteBlog={deleteBlog}/>
           )}  
           
       </div>

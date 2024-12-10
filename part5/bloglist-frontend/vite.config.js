@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3003', // forwards all req made to localhost:5173/api to backend 
         changeOrigin: true,
       },
     },

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import PropTypes from 'prop-types'
 
-const Blog = ({ blog, addLike, deleteBlog }) => {
+const Blog = ({ blog, user, addLike, deleteBlog }) => {
   const blogStyle = {
     paddingTop: 10,
     paddingLeft: 2,
@@ -41,7 +41,9 @@ const Blog = ({ blog, addLike, deleteBlog }) => {
             <p>{blog.url}</p>
             <p>likes {blog.likes} <button onClick={handleLike}>like</button></p>
             <p>{blog.author}</p>
-            <button onClick={handleDelete}>remove</button>
+            {blog.user.username === user.username && (
+              <button onClick={handleDelete}>remove</button>
+            )}
           </div>
         }
       </div>
