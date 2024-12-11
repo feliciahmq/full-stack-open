@@ -1,14 +1,23 @@
 import { useDispatch, useSelector } from "react-redux"
-import { upVote } from "../reducers/anecdoteReducer"
+import { addVote } from "../reducers/anecdoteReducer"
+import { setNotification } from "../reducers/notificationReducer"
 
 const AnecdoteList = () => {
   const dispatch = useDispatch() // hook to make changes to (dispatch actions to) state of the Redux store defined in main.jsx
-  const anecdotes = useSelector(state => state)
+  const anecdotes = useSelector(state => {
+    if ( state.filter !== 'ALL' ) {
+      return state.anecdotes.filter(a => a.content.toLowerCase().includes(state.filter)) // state now contains anecdotes & filter
+    }
+
+    return state.anecdotes
+  }) 
   const sortedAnecdotes = [...anecdotes].sort((a, b) => b.votes - a.votes) // sort before rendering
 
   const vote = (id) => {
     console.log('vote', id)
-    dispatch(upVote(id)) // use action creators that returns action object: (type, payload), then it matches type in reducer
+    const voted = anecdotes.find(a => a.id == id)
+    dispatch(addVote(id)) // pass action creators that returns action object: (type, payload)
+    dispatch(setNotification(`you vote '${voted.content}'`, 5))
   }
 
   return (
