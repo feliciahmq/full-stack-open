@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit'
 
-import anecdoteReducer from '../redux-anecdotes/src/reducers/anecdoteReducer'
-import filterReducer from '../redux-anecdotes/src/reducers/filterReducer'
-import notificationReducer from '../redux-anecdotes/src/reducers/notificationReducer'
+import anecdoteReducer from './src/reducers/anecdoteReducer'
+import filterReducer from './src/reducers/filterReducer'
+import notificationReducer from './src/reducers/notificationReducer'
 
 // combined reducer, every action gets handled in every part of the combined reducer
 const store = configureStore({
