@@ -1,4 +1,4 @@
-Learning React, Redux, Node.js, MongoDB, GraphQL & TypeScript.
+Learning React, Redux, Node.js, MongoDB & TypeScript.
 
 Building ReactJS application that use REST APIs built with Node.js. Using Postman for API testings.
 

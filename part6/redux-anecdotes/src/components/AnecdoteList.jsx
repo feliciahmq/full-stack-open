@@ -4,7 +4,7 @@ import { setNotification } from "../reducers/notificationReducer"
 import anecdoteService from "../services/anecdotes"
 
 const AnecdoteList = () => {
-  const dispatch = useDispatch() // hook to make changes to (dispatch actions to) state of the Redux store defined in main.jsx
+  const dispatch = useDispatch() // hook to make changes to (dispatch actions to) state of the Redux store defined in main.jsx/ store.js
   const anecdotes = useSelector(state => {
     if ( state.filter !== 'ALL' ) {
       return state.anecdotes.filter(a => a.content.toLowerCase().includes(state.filter)) // state now contains anecdotes & filter
@@ -19,7 +19,7 @@ const AnecdoteList = () => {
       ...anecdote,
       votes: anecdote.votes + 1
     })
-    dispatch(addVote(updatedAnecdote)) // pass action creators that returns action object: (type, payload)
+    dispatch(addVote(updatedAnecdote)) // pass action creators 
     dispatch(setNotification(`you vote '${updatedAnecdote.content}'`, 5))
   }
 
