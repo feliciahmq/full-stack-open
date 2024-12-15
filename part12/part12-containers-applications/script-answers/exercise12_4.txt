@@ -1,0 +1,3 @@
+apt install -y nodejs
+apt-get -y install curl
+node /usr/src/app/index.js
