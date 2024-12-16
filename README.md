@@ -100,11 +100,3 @@ Topics:
 - Using Docker, Docker Compose
 
 [Docker for todo-app backend](https://github.com/feliciahmq/full-stack-open/tree/main/part12/part12-containers-applications-main)
-
-### Part 13 - Using Relational Databases
-Topics:
-- Sequelize ORM
-- PostgreSQL
-- Database migrations
-
-[Blog List Back End (SQL)](https://github.com/feliciahmq/full-stack-open/tree/main/part13) - RESTful backend with PostgreSQL. App allows create, read, update and delete of blog post and author data. Users can create reading lists and mark blog posts as read. User authentication is done with JSON web tokens. Complex data are returned using table joins, query strings to specify data subsets and aggregate SQL functions to provide data summaries. Sequelize migrations are used to make database changes and to keep a log of the changes.
