@@ -49,7 +49,7 @@ app.get('/api/blogs', async (req, res) => {
 app.post('/api/blogs', async (req, res) => {
   try {
     const blog = await Blog.create(req.body) 
-    // blog = Blog.build(req.body), blog.save() -> this matter does not save object in db immediately
+    // blog = Blog.build(req.body), blog.save() -> this method does not save object in db immediately, so can modify before save()
     return res.json(blog)
   } catch(error) {
     return res.status(400).json({ error })    
