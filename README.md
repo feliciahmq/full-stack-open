@@ -50,7 +50,7 @@ Projects:
 - [Countries](https://github.com/feliciahmq/full-stack-open/tree/main/part2/dataforcountries) - A page that fetches country data from APIs based on user search.
 - [Phonebook Front End](https://github.com/feliciahmq/full-stack-open/tree/main/part2/phonebook) - A phonebook frontend app to add, delete or modify entries. Uses a mock REST API.
 
-## Part 3: Programming a Server with Node.js and Express
+### Part 3: Programming a Server with Node.js and Express
 
 Topics:
 - REST APIs using Node.js and Express
@@ -71,7 +71,7 @@ Topics:
 Projects:
 - [Blog List Back End](https://github.com/feliciahmq/full-stack-open/tree/main/part4) - A RESTful backend in Express for creating, reading, and updating blog posts data. Certain endpoints are limited to authenticated users only. Unit and integration tests were done using Jest and SuperTest.
 
-## Part 5 - Testing React Apps
+### Part 5 - Testing React Apps
 
 Topics:
 - Unit testing of React components using Jest and React Testing Library
@@ -85,8 +85,7 @@ Projects:
 ### Part 6 - State Management with Redux
 
 Topics:
-- Redux for state management (using both hooks and connect)
-- Redux Thunk middleware for asynchronous actions
+- Redux for state management 
 
 Projects:
 - [Unicafe Redux](https://github.com/feliciahmq/full-stack-open/tree/main/part6/unicafe-redux) - The unicafe app from part 1 with Redux for state management. 
